@@ -1,11 +1,12 @@
 import streamlit as st
-import pandas as pd
 import joblib
-
-st.set_page_config(page_title="Bike Rental Demand Prediction")
+import pandas as pd
 
 model = joblib.load("model.pkl")
 
+st.set_page_config(page_title="Bike Rental Demand Prediction")
+st.write("Model expects these columns:")
+st.write(model.feature_names_in_)
 st.title("🚲 Bike Rental Demand Prediction")
 st.sidebar.header("Input Parameters")
 
