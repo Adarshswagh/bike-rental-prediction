@@ -11,14 +11,8 @@ st.set_page_config(
 
 # ---------------- LOAD MODEL ----------------
 model = joblib.load("model.pkl")
-feature_cols = [
-    "yr",
-    "mnth","hr","weekday","temp","atemp","hum","windspeed",
-    "casual","registered",
-    "springer","summer","fall","winter",
-    "work","No work","NO","yes",
-    "Clear","Mist","heavy rain","lightsnow"
-]
+feature_cols = model.feature_names_in_
+
 
 
 # ---------------- CUSTOM CSS ----------------
@@ -78,7 +72,8 @@ weather = st.sidebar.selectbox("Weather", ["Clear", "Mist", "heavy rain", "light
 # ---------------- BUILD INPUT DATA ----------------
 input_data = pd.DataFrame(0, index=[0], columns=feature_cols)
 
-# Fill numeric values
+# Numeric values
+input_data["yr"] = yr
 input_data["mnth"] = mnth
 input_data["hr"] = hr
 input_data["weekday"] = weekday
@@ -89,10 +84,11 @@ input_data["windspeed"] = windspeed
 input_data["casual"] = casual
 input_data["registered"] = registered
 
-# Safe categorical encoding
+# One-hot encoding
 for col in [season, workingday, holiday, weather]:
     if col in input_data.columns:
         input_data[col] = 1
+
 
 # ---------------- MAIN LAYOUT ----------------
 col1, col2 = st.columns([1, 1])
