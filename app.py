@@ -11,7 +11,13 @@ st.set_page_config(
 
 # ---------------- LOAD MODEL ----------------
 model = joblib.load("model.pkl")
-feature_cols = model.feature_names_in_
+feature_cols = [
+    "mnth","hr","weekday","temp","atemp","hum","windspeed",
+    "casual","registered",
+    "springer","summer","fall","winter",
+    "work","No work","NO","yes",
+    "Clear","Mist","heavy rain","lightsnow"
+]
 
 # ---------------- CUSTOM CSS ----------------
 st.markdown("""
