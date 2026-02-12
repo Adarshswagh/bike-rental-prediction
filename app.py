@@ -2,62 +2,104 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-st.set_page_config(page_title="Bike Rental Demand Prediction")
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Bike Rental Demand Prediction",
+    page_icon="🚲",
+    layout="wide"
+)
 
 # ---------------- LOAD MODEL ----------------
 model = joblib.load("model.pkl")
+feature_cols = model.feature_names_in_
 
-st.title("🚲 Bike Rental Demand Prediction")
-st.sidebar.header("Input Parameters")
+# ---------------- CUSTOM CSS ----------------
+st.markdown("""
+    <style>
+        .main-title {
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: #2E86C1;
+        }
+        .sub-text {
+            text-align: center;
+            font-size: 18px;
+            color: grey;
+        }
+        .result-card {
+            background-color: #1f2937;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# ---------------- USER INPUTS ----------------
-season = st.sidebar.selectbox("Season (1-4)", [1, 2, 3, 4])
-yr = st.sidebar.selectbox("Year (0=2011, 1=2012)", [0, 1])
+# ---------------- TITLE ----------------
+st.markdown('<div class="main-title">🚲 Bike Rental Demand Prediction</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-text">Predict total bike rentals based on weather and time conditions</div>', unsafe_allow_html=True)
+st.write("")
+
+# ---------------- SIDEBAR ----------------
+st.sidebar.header("⚙️ Input Parameters")
+
+# Numeric Inputs
 mnth = st.sidebar.slider("Month", 1, 12, 6)
 hr = st.sidebar.slider("Hour", 0, 23, 12)
-holiday = st.sidebar.selectbox("Holiday (0/1)", [0, 1])
 weekday = st.sidebar.slider("Weekday (0=Sun)", 0, 6, 3)
-workingday = st.sidebar.selectbox("Working Day (0/1)", [0, 1])
-weathersit = st.sidebar.selectbox("Weather Situation (1-4)", [1, 2, 3, 4])
 
-temp = st.sidebar.slider("Temperature (0-1 scaled)", 0.0, 1.0, 0.5)
-atemp = st.sidebar.slider("Feels Like Temperature", 0.0, 1.0, 0.5)
-hum = st.sidebar.slider("Humidity", 0.0, 1.0, 0.5)
-windspeed = st.sidebar.slider("Windspeed", 0.0, 1.0, 0.5)
+temp = st.sidebar.slider("Temperature (0-1)", 0.0, 1.0, 0.5)
+atemp = st.sidebar.slider("Feels Like Temperature (0-1)", 0.0, 1.0, 0.5)
+hum = st.sidebar.slider("Humidity (0-1)", 0.0, 1.0, 0.5)
+windspeed = st.sidebar.slider("Windspeed (0-1)", 0.0, 1.0, 0.5)
 
-# ---------------- BUILD DATAFRAME ----------------
-input_data = pd.DataFrame({
-    "season": [season],
-    "yr": [yr],
-    "mnth": [mnth],
-    "hr": [hr],
-    "holiday": [holiday],
-    "weekday": [weekday],
-    "workingday": [workingday],
-    "weathersit": [weathersit],
-    "temp": [temp],
-    "atemp": [atemp],
-    "hum": [hum],
-    "windspeed": [windspeed],
-})
+casual = st.sidebar.number_input("Casual Users", min_value=0, value=100)
+registered = st.sidebar.number_input("Registered Users", min_value=0, value=200)
 
-# 🔥 Force exact column order (VERY IMPORTANT)
-input_data = input_data[
-    ['season',
-     'yr',
-     'mnth',
-     'hr',
-     'holiday',
-     'weekday',
-     'workingday',
-     'weathersit',
-     'temp',
-     'atemp',
-     'hum',
-     'windspeed']
-]
+# Categorical Inputs
+season = st.sidebar.selectbox("Season", ["springer", "summer", "fall", "winter"])
+workingday = st.sidebar.selectbox("Working Day", ["work", "No work"])
+holiday = st.sidebar.selectbox("Holiday", ["NO", "yes"])
+weather = st.sidebar.selectbox("Weather", ["Clear", "Mist", "heavy rain", "lightsnow"])
 
-# ---------------- PREDICTION ----------------
-if st.button("Predict Bike Demand"):
-    prediction = model.predict(input_data)[0]
-    st.success(f"Estimated Bike Rentals: {int(prediction)}")
+# ---------------- BUILD INPUT DATA ----------------
+input_data = pd.DataFrame(0, index=[0], columns=feature_cols)
+
+# Fill numeric values
+input_data["mnth"] = mnth
+input_data["hr"] = hr
+input_data["weekday"] = weekday
+input_data["temp"] = temp
+input_data["atemp"] = atemp
+input_data["hum"] = hum
+input_data["windspeed"] = windspeed
+input_data["casual"] = casual
+input_data["registered"] = registered
+
+# Safe categorical encoding
+for col in [season, workingday, holiday, weather]:
+    if col in input_data.columns:
+        input_data[col] = 1
+
+# ---------------- MAIN LAYOUT ----------------
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    st.subheader("📊 Selected Input Summary")
+    st.dataframe(input_data, use_container_width=True)
+
+with col2:
+    st.subheader("🔮 Prediction Result")
+
+    if st.button("🚀 Predict Bike Demand", use_container_width=True):
+        prediction = model.predict(input_data)[0]
+
+        st.markdown(
+            f'<div class="result-card">Estimated Bike Rentals<br>🚲 {int(prediction)}</div>',
+            unsafe_allow_html=True
+        )
