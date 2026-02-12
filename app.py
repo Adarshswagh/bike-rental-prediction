@@ -39,17 +39,19 @@ weather_map = {"Clear": 1, "Mist": 2, "heavy rain": 3, "lightsnow": 4}
 # ---------------- BUILD INPUT DICTIONARY ----------------
 input_dict = {
     "season": season_map[season],
+    "yr": 1,   # ADD THIS
     "mnth": mnth,
     "hr": hr,
     "holiday": holiday_map[holiday],
     "weekday": weekday,
     "workingday": workingday_map[workingday],
-    "weathersit": weather_map[weather],  # change if your model uses different name
+    "weathersit": weather_map[weather],
     "temp": temp,
     "atemp": atemp,
     "hum": hum,
     "windspeed": windspeed,
 }
+
 
 # Convert to DataFrame
 input_data = pd.DataFrame([input_dict])
