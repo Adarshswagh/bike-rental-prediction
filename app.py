@@ -49,6 +49,8 @@ st.write("")
 
 # ---------------- SIDEBAR ----------------
 st.sidebar.header("⚙️ Input Parameters")
+instant = st.sidebar.number_input("Instant", min_value=1, value=100)
+
 
 yr = st.sidebar.selectbox("Year (0 = 2011, 1 = 2012)", [0, 1])
 mnth = st.sidebar.slider("Month", 1, 12, 6)
@@ -73,6 +75,7 @@ input_data = pd.DataFrame(0, index=[0], columns=feature_cols)
 
 # Fill numeric values only if present in model
 numeric_inputs = {
+    "instant": instant,
     "yr": yr,
     "mnth": mnth,
     "hr": hr,
@@ -84,6 +87,7 @@ numeric_inputs = {
     "casual": casual,
     "registered": registered
 }
+
 
 for col, value in numeric_inputs.items():
     if col in input_data.columns:
