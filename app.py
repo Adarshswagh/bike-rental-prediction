@@ -119,3 +119,4 @@ with col2:
         except Exception as e:
             st.error("Prediction failed. Check feature alignment.")
             st.write("Error:", e)
+# add model.pkl
