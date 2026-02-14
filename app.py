@@ -1,122 +1,76 @@
-import streamlit as st
+import streamlit as st  # First import streamlit
+st.set_page_config(page_title="Bike Rental Prediction", layout="wide")  # Must be first Streamlit command
+
 import pandas as pd
+import numpy as np
 import joblib
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(
-    page_title="Bike Rental Demand Prediction",
-    page_icon="🚲",
-    layout="wide"
+# -----------------------------
+# Load trained model
+# -----------------------------
+@st.cache_data
+def load_model():
+    return joblib.load("model.pkl")
+
+model = load_model()
+
+# -----------------------------
+# Page title and description
+# -----------------------------
+st.title("🚲 Bike Rental Demand Prediction")
+st.markdown("Predict the estimated number of bike rentals using the same features as in the original Jupyter code.")
+
+# -----------------------------
+# Sidebar Inputs (match Jupyter features)
+# -----------------------------
+st.sidebar.header("Input Features")
+
+# Numeric inputs
+temp = st.sidebar.number_input("Temperature (temp, 0-1)", 0.0, 1.0, 0.5)
+atemp = st.sidebar.number_input("Feels-like Temperature (atemp, 0-1)", 0.0, 1.0, 0.5)
+hum = st.sidebar.number_input("Humidity (hum, 0-1)", 0.0, 1.0, 0.5)
+windspeed = st.sidebar.number_input("Windspeed (windspeed, 0-1)", 0.0, 1.0, 0.1)
+yr = st.sidebar.selectbox("Year (yr, 0=2011, 1=2012)", [0, 1])
+mnth = st.sidebar.selectbox("Month (mnth, 1-12)", list(range(1, 13)))
+hr = st.sidebar.selectbox("Hour (hr, 0-23)", list(range(0, 24)))
+weekday = st.sidebar.selectbox("Weekday (weekday, 0=Sun, 6=Sat)", list(range(0, 7)))
+
+# Categorical inputs
+season = st.sidebar.selectbox("Season (season, 1=Spring, 2=Summer, 3=Fall, 4=Winter)", [1, 2, 3, 4])
+holiday = st.sidebar.selectbox("Holiday (holiday, 0=No, 1=Yes)", [0, 1])
+workingday = st.sidebar.selectbox("Working Day (workingday, 0=No, 1=Yes)", [0, 1])
+weathersit = st.sidebar.selectbox(
+    "Weather Situation (weathersit, 1=Clear, 2=Mist, 3=Light Snow/Rain, 4=Heavy Rain/Snow)",
+    [1, 2, 3, 4]
 )
 
-# ---------------- LOAD MODEL ----------------
-model = joblib.load("model.pkl")
+# -----------------------------
+# Prepare input dataframe
+# -----------------------------
+input_df = pd.DataFrame({
+    'temp': [temp],
+    'atemp': [atemp],
+    'hum': [hum],
+    'windspeed': [windspeed],
+    'yr': [yr],
+    'mnth': [mnth],
+    'hr': [hr],
+    'weekday': [weekday],
+    'season': [season],
+    'holiday': [holiday],
+    'workingday': [workingday],
+    'weathersit': [weathersit]
+})
 
-# Use exact trained feature names
-feature_cols = model.feature_names_in_
+# -----------------------------
+# Predict button
+# -----------------------------
+if st.button("Predict Bike Rentals"):
+    prediction = model.predict(input_df)[0]
+    st.success(f"🚲 Estimated Bike Rentals: {int(prediction)}")
 
-# ---------------- CUSTOM CSS ----------------
-st.markdown("""
-    <style>
-        .main-title {
-            text-align: center;
-            font-size: 40px;
-            font-weight: bold;
-            color: #2E86C1;
-        }
-        .sub-text {
-            text-align: center;
-            font-size: 18px;
-            color: grey;
-        }
-        .result-card {
-            background-color: #111827;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# ---------------- TITLE ----------------
-st.markdown('<div class="main-title">🚲 Bike Rental Demand Prediction</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-text">Predict total bike rentals based on weather and time conditions</div>', unsafe_allow_html=True)
-st.write("")
-
-# ---------------- SIDEBAR ----------------
-st.sidebar.header("⚙️ Input Parameters")
-instant = st.sidebar.number_input("Instant", min_value=1, value=100)
-
-
-yr = st.sidebar.selectbox("Year (0 = 2011, 1 = 2012)", [0, 1])
-mnth = st.sidebar.slider("Month", 1, 12, 6)
-hr = st.sidebar.slider("Hour", 0, 23, 12)
-weekday = st.sidebar.slider("Weekday (0=Sun)", 0, 6, 3)
-
-temp = st.sidebar.slider("Temperature (0-1)", 0.0, 1.0, 0.5)
-atemp = st.sidebar.slider("Feels Like Temperature (0-1)", 0.0, 1.0, 0.5)
-hum = st.sidebar.slider("Humidity (0-1)", 0.0, 1.0, 0.5)
-windspeed = st.sidebar.slider("Windspeed (0-1)", 0.0, 1.0, 0.5)
-
-casual = st.sidebar.number_input("Casual Users", min_value=0, value=100)
-registered = st.sidebar.number_input("Registered Users", min_value=0, value=200)
-
-season = st.sidebar.selectbox("Season", ["springer", "summer", "fall", "winter"])
-workingday = st.sidebar.selectbox("Working Day", ["work", "No work"])
-holiday = st.sidebar.selectbox("Holiday", ["NO", "yes"])
-weather = st.sidebar.selectbox("Weather", ["Clear", "Mist", "heavy rain", "lightsnow"])
-
-# ---------------- BUILD INPUT DATA ----------------
-input_data = pd.DataFrame(0, index=[0], columns=feature_cols)
-
-# Fill numeric values only if present in model
-numeric_inputs = {
-    "instant": instant,
-    "yr": yr,
-    "mnth": mnth,
-    "hr": hr,
-    "weekday": weekday,
-    "temp": temp,
-    "atemp": atemp,
-    "hum": hum,
-    "windspeed": windspeed,
-    "casual": casual,
-    "registered": registered
-}
-
-
-for col, value in numeric_inputs.items():
-    if col in input_data.columns:
-        input_data[col] = value
-
-# Safe one-hot encoding
-for col in [season, workingday, holiday, weather]:
-    if col in input_data.columns:
-        input_data[col] = 1
-
-# ---------------- MAIN LAYOUT ----------------
-col1, col2 = st.columns([1, 1])
-
-with col1:
-    st.subheader("📊 Model Input Data")
-    st.dataframe(input_data, use_container_width=True)
-
-with col2:
-    st.subheader("🔮 Prediction Result")
-
-    if st.button("🚀 Predict Bike Demand", use_container_width=True):
-        try:
-            prediction = model.predict(input_data)[0]
-
-            st.markdown(
-                f'<div class="result-card">Estimated Bike Rentals<br>🚲 {int(prediction)}</div>',
-                unsafe_allow_html=True
-            )
-        except Exception as e:
-            st.error("Prediction failed. Check feature alignment.")
-            st.write("Error:", e)
-# add model.pkl
+# -----------------------------
+# Show input data for reference
+# -----------------------------
+with st.expander("See Input Data"):
+    st.write(input_df)
