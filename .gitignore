@@ -1,6 +1,4 @@
-# Model files
-model.pkl
-*.pkl
+
 
 # Python
 __pycache__/
